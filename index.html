@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>物件マップ | ハウジングイースト</title>
+<style>
+:root{--bg:#f3f7f4;--card:#fff;--text:#18291f;--sub:#5f7366;--line:#dbe6de;--brand:#1f8a4c;--brand-d:#146a38;--brand-t:#fff;--soft:#e4f3ea;--shadow:0 1px 3px rgba(20,60,35,.08),0 4px 14px rgba(20,60,35,.06);
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1511;--card:#17211b;--text:#e6f0e9;--sub:#9db3a4;--line:#26352c;--brand:#3fb06f;--brand-d:#2f9159;--brand-t:#07140c;--soft:#1d3326;--shadow:none}}
+:root[data-theme="dark"]{--bg:#0e1511;--card:#17211b;--text:#e6f0e9;--sub:#9db3a4;--line:#26352c;--brand:#3fb06f;--brand-d:#2f9159;--brand-t:#07140c;--soft:#1d3326;--shadow:none}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--text);font-family:"Hiragino Sans","Yu Gothic UI","Yu Gothic",Meiryo,sans-serif;line-height:1.5;-webkit-text-size-adjust:100%}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--brand-d);z-index:20}
+header{background:linear-gradient(135deg,var(--brand-d),var(--brand));color:var(--brand-t);padding:22px 18px 54px}
+header .in{max-width:560px;margin:0 auto}
+.shop{font-size:12px;letter-spacing:.08em;opacity:.9;margin:0}
+h1{font-size:24px;margin:4px 0 0;display:flex;align-items:center;gap:8px}
+h1 svg{width:26px;height:26px;flex:none}
+main{max-width:560px;margin:-34px auto 0;padding:0 16px 32px}
+.search{position:sticky;top:env(safe-area-inset-top,0px);z-index:10;padding:6px 0 10px;background:linear-gradient(var(--bg) 70%,transparent)}
+.field{position:relative}
+.field svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);width:20px;height:20px;color:var(--sub)}
+input{width:100%;font-size:16px;padding:14px 14px 14px 44px;border:1px solid var(--line);border-radius:14px;background:var(--card);color:var(--text);box-shadow:var(--shadow);font-family:inherit}
+input::placeholder{color:var(--sub)}
+input:focus{outline:2px solid var(--brand);border-color:transparent}
+.count{font-size:12px;color:var(--sub);margin:4px 4px 6px}
+.row{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 12px 12px 14px;margin:10px 0;box-shadow:var(--shadow)}
+.pin{flex:none;width:40px;height:40px;border-radius:50%;background:var(--soft);color:var(--brand);display:grid;place-items:center}
+.pin svg{width:22px;height:22px}
+.name{flex:1;min-width:0;font-size:16px;font-weight:700;margin:0;word-break:break-word}
+a.go{flex:none;display:inline-flex;align-items:center;gap:4px;background:var(--brand);color:var(--brand-t);text-decoration:none;font-weight:700;font-size:14px;padding:10px 14px;border-radius:999px}
+a.go:active{background:var(--brand-d)}
+a.go svg{width:16px;height:16px}
+.empty{text-align:center;color:var(--sub);padding:36px 0}
+footer{text-align:center;color:var(--sub);font-size:12px;padding:8px 16px 24px}
+</style>
+</head>
+<body>
+<header><div class="in">
+  <p class="shop">ハウジングイースト 東京外語大前店</p>
+  <h1><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>物件マップ</h1>
+</div></header>
+<main>
+  <div class="search"><div class="field">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+    <input id="q" type="search" placeholder="物件名で探す" autocomplete="off" enterkeyhint="go" aria-label="物件名で検索">
+  </div></div>
+  <div class="count" id="count"></div>
+  <div id="list"></div>
+</main>
+<footer>「地図を開く」でGoogleマップが開きます</footer>
+<script>
+// ===== 物件の追加はここだけ編集 =====
+// 下の一覧の「最後の物件の次の行」に、次の形で1行足します。
+//   {name:"物件名", kana:"よみがな(なくてもOK)", addr:"東京都〇〇市△△1-2-3"},
+// ・name=画面に出る名前 / addr=地図で検索する住所 / kana=検索用の読み(空でもOK)
+// ・各行の末尾に , を付ける(一覧の最後の1行だけは , なし)
+// ・消したいときは、その行をまるごと削除
+const PROPS = [
+  {name:"M&Asahi", kana:"エムアンドアサヒ", addr:"東京都府中市朝日町2-6-12"},
+  {name:"フレールハウス", kana:"", addr:"東京都三鷹市大沢6-10-25"},
+  {name:"グアルダ92", kana:"グアルダ", addr:"東京都調布市上石原1-36-17"},
+  {name:"グランドール紅葉ヶ丘", kana:"", addr:"東京都府中市紅葉丘3丁目54-5"},
+  {name:"Aere Garden(アエレ ガーデン)", kana:"アエレガーデン", addr:"東京都府中市朝日町1-23-16"},
+  {name:"ジンカルムⅡ", kana:"ジンカルム2", addr:"東京都府中市若松町2-29-30"},
+  {name:"メゾン・ド・マルミ", kana:"メゾンドマルミ", addr:"東京都府中市紅葉丘3-39-27"},
+  {name:"モンガル96", kana:"モンガル", addr:"東京都調布市上石原1-41-5"},
+  {name:"DCclover", kana:"ディーシークローバー", addr:"東京都府中市朝日町1-24-6"},
+  {name:"リバーサイド", kana:"", addr:"東京都三鷹市大沢6-2-1"},
+  {name:"ローレンシャン", kana:"", addr:"東京都府中市紅葉丘3-35-1"}
+];
+const mapUrl = p => "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(p.addr);
+const norm = s => (s||"").toLowerCase().normalize("NFKC").replace(/\s+/g,"").replace(/[\u3041-\u3096]/g, c => String.fromCharCode(c.charCodeAt(0)+0x60));
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const q = document.getElementById("q"), list = document.getElementById("list"), count = document.getElementById("count");
+const PIN = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>';
+const ARW = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg>';
+const hitsOf = () => { const t = norm(q.value); return PROPS.filter(p => !t || norm(p.name+p.kana).includes(t)); };
+function render(){
+  const h = hitsOf();
+  count.textContent = h.length + "件の物件";
+  list.innerHTML = h.length ? h.map(p => `<div class="row"><div class="pin">${PIN}</div><p class="name">${esc(p.name)}</p><a class="go" href="${mapUrl(p)}" target="_blank" rel="noopener">地図を開く${ARW}</a></div>`).join("") : '<div class="empty">該当する物件がありません</div>';
+}
+q.addEventListener("input", render);
+q.addEventListener("keydown", e => { if(e.key==="Enter"){ const h=hitsOf(); if(h.length===1) window.open(mapUrl(h[0]),"_blank","noopener"); } });
+render();
+</script>
+</body>
+</html>
